@@ -3,7 +3,6 @@ alias copyssh="pbcopy < $HOME/.ssh/id_rsa.pub"
 alias reload="source $HOME/.zshrc"
 alias reloaddns="dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
 alias ll="/usr/local/opt/coreutils/libexec/gnubin/ls -AhlFo --color --group-directories-first"
-alias phpstorm='open -a /Applications/PhpStorm.app "`pwd`"'
 alias shrug="echo '¯\_(ツ)_/¯' | pbcopy"
 alias dotfiles="cd $DOTFILES"
 alias aliases="vi $DOTFILES/aliases.zsh"
@@ -13,11 +12,8 @@ alias qq="clear"
 
 # Directories
 alias www="cd /Users/victormalai/www"
-<<<<<<< HEAD
-=======
 alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && npm run dev"
 alias roombriks="cd /Users/victormalai/www/roombricks && pstorm . && npm run dev"
->>>>>>> d3e4c6b (my)
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
@@ -158,8 +154,8 @@ alias mongo-stop="brew services stop mongodb-community"
 
 ## Restify
 
-alias repo="a restify:repository $1" 
+alias repo="a restify:repository $1"
 
-## MySQL 
+## MySQL
 alias mysql.start="cd /Users/eduardlupacescu/Sites/work/mysql-docker && docker-compose up -d"
 alias mysql.stop="cd /Users/eduardlupacescu/Sites/work/mysql-docker && docker-compose down"
