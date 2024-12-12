@@ -12,16 +12,10 @@ alias vars="vi $DOTFILES/variables.zsh"
 alias c="clear"
 
 # Directories
-alias home="cd $HOME"
+alias www="cd /Users/victormalai/www"
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
-alias lara="sites && cd laravel/"
-alias work="sites && cd work/"
-alias binar="sites && cd binarcode/"
-alias school="sites && cd school/"
-alias h="sites && cd homestead/"
-alias revamp="work && cd revamp-givelegacy-dashboard"
 
 # Laravel
 alias a="php artisan"
@@ -124,18 +118,6 @@ alias prmm="gh pr create -B main --fill"
 alias gtrigger="git commit --allow-empty -m 'wakey wakey GitHub Actions'"
 alias glog="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
 
-# LSD
-alias ls="lsd"
-alias l="ls -l"
-alias la="ls -a"
-alias lla="ls -la"
-alias lt="ls --tree"
-alias grep='grep --color=auto'
-alias fgrep='fgrep --color=auto'
-alias egrep='egrep --color=auto'
-alias diff='diff --color=auto'
-
-# Files
 alias about="neofetch"
 alias vi="vim"
 alias search="grep -rnw . -e $1"
