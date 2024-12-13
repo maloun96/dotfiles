@@ -10,6 +10,31 @@ alias paths="vi $DOTFILES/path.zsh"
 alias vars="vi $DOTFILES/variables.zsh"
 alias qq="clear"
 
+alias quickclean='echo "🧹 Starting Mac maintenance..." && \
+    echo "\n📊 Memory status before cleanup:" && \
+    top -l 1 | grep PhysMem && \
+    echo "\n🗑️  Purging memory..." && \
+    sudo purge && \
+    echo "\n🧽 Clearing user caches..." && \
+    rm -rf ~/Library/Caches/* && \
+    echo "\n🌐 Flushing DNS cache..." && \
+    sudo dscacheutil -flushcache && \
+    sudo killall -HUP mDNSResponder && \
+    echo "\n🗂️  Clearing application caches..." && \
+    rm -rf ~/Library/Caches/Google/Chrome/Default/Cache/* && \
+    rm -rf ~/Library/Caches/com.apple.Safari/WebKitCache/* && \
+    echo "\n📦 Clearing derived data..." && \
+    rm -rf ~/Library/Developer/Xcode/DerivedData/* && \
+    echo "\n🗑️  Clearing trash..." && \
+    rm -rf ~/.Trash/* && \
+    echo "\n📊 Memory status after cleanup:" && \
+    top -l 1 | grep PhysMem && \
+    echo "\n✨ Maintenance complete! Your Mac should feel faster now."'
+
+alias kpstorm='echo "🔪 Killing PhpStorm processes..." && \
+    pkill -9 -f "PhpStorm" && \
+    echo "✨ PhpStorm processes terminated."'
+
 # Directories
 alias www="cd /Users/victormalai/www"
 alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && npm run dev"
@@ -119,6 +144,18 @@ alias prm="gh pr create -B master -f"
 alias prmm="gh pr create -B main --fill"
 alias gtrigger="git commit --allow-empty -m 'wakey wakey GitHub Actions'"
 alias glog="git --no-pager log --all --color=always --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' | less -r -X +/[^/]HEAD"
+
+alias gfeat='f() { git commit -m "feat($1): $2" "${@:3}"; }; f'
+alias gfix='f() { git commit -m "fix($1): $2" "${@:3}"; }; f'
+alias gdocs='f() { git commit -m "docs($1): $2" "${@:3}"; }; f'
+alias gstyle='f() { git commit -m "style($1): $2" "${@:3}"; }; f'
+alias grefactor='f() { git commit -m "refactor($1): $2" "${@:3}"; }; f'
+alias gperf='f() { git commit -m "perf($1): $2" "${@:3}"; }; f'
+alias gtest='f() { git commit -m "test($1): $2" "${@:3}"; }; f'
+alias gchore='f() { git commit -m "chore($1): $2" "${@:3}"; }; f'
+alias gbuild='f() { git commit -m "build($1): $2" "${@:3}"; }; f'
+alias gci='f() { git commit -m "ci($1): $2" "${@:3}"; }; f'
+
 
 alias about="neofetch"
 alias vi="vim"
