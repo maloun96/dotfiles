@@ -8,8 +8,7 @@
 # Uncomment the following line to enable command auto-correction.
 ENABLE_CORRECTION="true"
 
-plugins=(git git-open)
-
+plugins=(git git-open zsh-autosuggestions zsh-syntax-highlighting autojump)
 # https://github.com/bhilburn/powerlevel9k#prompt-customization
 POWERLEVEL9K_SHORTEN_DIR_LENGTH=1
 POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_last
