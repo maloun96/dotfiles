@@ -1,6 +1,6 @@
 # Load plugin from the brew path
-source $BREW_LOCATION/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source $ZSH_CUSTOM/plugins/git-open/git-open.plugin.zsh
+#source $BREW_LOCATION/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+#source $ZSH_CUSTOM/plugins/git-open/git-open.plugin.zsh
 
 # Uncomment the following line to disable auto-setting terminal title.
 # DISABLE_AUTO_TITLE="true"

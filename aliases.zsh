@@ -9,10 +9,15 @@ alias dotfiles="cd $DOTFILES"
 alias aliases="vi $DOTFILES/aliases.zsh"
 alias paths="vi $DOTFILES/path.zsh"
 alias vars="vi $DOTFILES/variables.zsh"
-alias c="clear"
+alias qq="clear"
 
 # Directories
 alias www="cd /Users/victormalai/www"
+<<<<<<< HEAD
+=======
+alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && npm run dev"
+alias roombriks="cd /Users/victormalai/www/roombricks && pstorm . && npm run dev"
+>>>>>>> d3e4c6b (my)
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
@@ -91,6 +96,7 @@ alias stash="git stash -u"
 alias unstage="git restore --staged ."
 alias wip="commit wip"
 alias pwip="push wip"
+aliast ss="git status"
 alias gcn="git checkout -b"
 alias gcm="git checkout master && git pull origin master"
 alias gc4x="git checkout 4.x && git pull origin 4.x" # Restify
