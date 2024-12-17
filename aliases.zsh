@@ -165,7 +165,6 @@ alias search="grep -rnw . -e $1"
 alias start-redis="brew services start redis"
 
 # Composer
-alias composer="php -d memory_limit=-1 /usr/local/bin/composer"
 
 # Port
 alias killme="lsof -n -i4TCP:"
