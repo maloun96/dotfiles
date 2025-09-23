@@ -9,7 +9,7 @@ alias aliases="vi $DOTFILES/aliases.zsh"
 alias paths="vi $DOTFILES/path.zsh"
 alias vars="vi $DOTFILES/variables.zsh"
 alias qq="clear"
-
+alias copyb='git branch --show-current | tr -d "\n" | pbcopy'
 alias quickclean='echo "🧹 Starting Mac maintenance..." && \
     echo "\n📊 Memory status before cleanup:" && \
     top -l 1 | grep PhysMem && \
@@ -42,6 +42,7 @@ alias roombriks="cd /Users/victormalai/www/roombricks && pstorm . && npm run dev
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
+
 
 # Laravel
 alias a="php artisan"
@@ -142,6 +143,7 @@ alias gfa="git fetch --all"
 alias prd="gh pr create -B development -f"
 alias prdd="gh pr create -B develop -f"
 alias prs="gh pr create -B staging"
+alias glog="git log --oneline --format='%h %ar %s'"
 alias prm="gh pr create -B master -f"
 alias prmm="gh pr create -B main --fill"
 alias gtrigger="git commit --allow-empty -m 'wakey wakey GitHub Actions'"
