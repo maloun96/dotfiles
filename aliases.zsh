@@ -159,6 +159,7 @@ alias gtest='f() { git commit -m "test($1): $2" "${@:3}"; }; f'
 alias gchore='f() { git commit -m "chore($1): $2" "${@:3}"; }; f'
 alias gbuild='f() { git commit -m "build($1): $2" "${@:3}"; }; f'
 alias gci='f() { git commit -m "ci($1): $2" "${@:3}"; }; f'
+alias gpick="git cherry-pick"
 
 
 alias about="neofetch"
