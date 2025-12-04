@@ -38,7 +38,7 @@ alias kpstorm='echo "🔪 Killing PhpStorm processes..." && \
 # Directories
 alias www="cd /Users/victormalai/www"
 alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && npm run dev"
-alias roombriks="cd /Users/victormalai/www/roombricks && pstorm . && npm run dev"
+alias roombricks="cd /Users/victormalai/www/roombricks && pstorm . && (cd vue && npm run dev &) && (cd api && php artisan serve)"
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
@@ -103,10 +103,13 @@ alias docker-composer="docker-compose"
 
 # Git
 alias nah='git reset --hard HEAD; git clean -df'
+alias nahh='git fetch origin && git reset --hard @{u} && git clean -df'
+alias ghash="git rev-parse HEAD"
+alias gcp="git cherry-pick"
 alias gst="git status"
 alias gb="git branch"
 alias gc="git checkout"
-alias gl="git log --oneline --decorate --color"
+alias gl='git log --oneline --decorate --color --date=short --pretty=format:"%C(yellow)%h%C(reset) %C(blue)%ad%C(reset) %s %C(red)%d%C(reset)"'
 alias amend="git add . && git commit --amend --no-edit"
 alias amendp="amend && git push -f origin HEAD"
 alias openpr="gh pr view --web"
