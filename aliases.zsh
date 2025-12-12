@@ -37,8 +37,9 @@ alias kpstorm='echo "🔪 Killing PhpStorm processes..." && \
 
 # Directories
 alias www="cd /Users/victormalai/www"
-alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && npm run dev"
-alias roombricks="cd /Users/victormalai/www/roombricks && pstorm . && (cd vue && npm run dev &) && (cd api && php artisan serve)"
+alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && pnpm run dev"
+alias roombricks="cd /Users/victormalai/www/roombriks-desktop && npm run dev"
+alias roombricksapi="cd /Users/victormalai/www/roombricks && npx concurrently --kill-others -n vite,laravel -c blue,green 'npm run dev' 'php artisan serve'"
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
@@ -105,6 +106,7 @@ alias docker-composer="docker-compose"
 alias nah='git reset --hard HEAD; git clean -df'
 alias nahh='git fetch origin && git reset --hard @{u} && git clean -df'
 alias ghash="git rev-parse HEAD"
+alias gclean='git fetch -p && git branch -vv | grep ": gone]" | awk "{print \$1}" | xargs -r git branch -D'
 alias gcp="git cherry-pick"
 alias gst="git status"
 alias gb="git branch"
@@ -112,6 +114,7 @@ alias gc="git checkout"
 alias gl='git log --oneline --decorate --color --date=short --pretty=format:"%C(yellow)%h%C(reset) %C(blue)%ad%C(reset) %s %C(red)%d%C(reset)"'
 alias amend="git add . && git commit --amend --no-edit"
 alias amendp="amend && git push -f origin HEAD"
+alias gpff="git push --force-with-lease"
 alias openpr="gh pr view --web"
 alias commit="git add . && git commit -m"
 alias diff="git diff"
@@ -169,6 +172,10 @@ alias about="neofetch"
 alias vi="vim"
 alias search="grep -rnw . -e $1"
 
+# Github worktree https://github.com/coderabbitai/git-worktree-runner
+
+alias gw="git gtr"
+gwg() { cd "$(gw go "$1")" }
 # Redis
 alias start-redis="brew services start redis"
 
@@ -200,6 +207,10 @@ alias mongo-stop="brew services stop mongodb-community"
 
 alias repo="a restify:repository $1"
 
-## MySQL
-alias mysql.start="cd /Users/eduardlupacescu/Sites/work/mysql-docker && docker-compose up -d"
-alias mysql.stop="cd /Users/eduardlupacescu/Sites/work/mysql-docker && docker-compose down"
+## Claude
+alias cl="claude"
+alias cld="claude --dangerously-skip-permissions"
+
+## SSH
+alias sshroombriks="ssh forge@3.140.229.41"
+alias sshfractalstorage="ssh forge@18.221.31.116"
