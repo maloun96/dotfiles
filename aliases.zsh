@@ -40,6 +40,8 @@ alias www="cd /Users/victormalai/www"
 alias pbx="cd /Users/victormalai/www/pbx && pstorm . && cd frontend && pnpm run dev"
 alias roombricks="cd /Users/victormalai/www/roombriks-desktop && npm run dev"
 alias roombricksapi="cd /Users/victormalai/www/roombricks && npx concurrently --kill-others -n vite,laravel -c blue,green 'npm run dev' 'php artisan serve'"
+alias formo="open -a Simulator && cd /Users/victormalai/www/formo && flutter run"
+alias formoapi="cd /Users/victormalai/www/sixpack-nova2 && php artisan serve"
 alias dots="cd $DOTFILES"
 alias library="cd $HOME/Library"
 alias sites="cd $HOME/Sites"
@@ -214,3 +216,51 @@ alias cld="claude --dangerously-skip-permissions"
 ## SSH
 alias sshroombriks="ssh forge@3.140.229.41"
 alias sshfractalstorage="ssh forge@18.221.31.116"
+
+## PBX — SIP third-party env switcher
+# Toggles which labeled SIP_* block is active (uncommented) in pbx/.env.
+# .env stays the single source of truth; keys live there, not here.
+sipenv() {
+  local env_file="/Users/victormalai/www/pbx/.env"
+  local -A labels=(
+    binarcode "PRODUCTION (BINARCODE)"
+    dev       "DEV"
+    prod      "PRODUCTION"
+    stage     "STAGE"
+    local     "SIP LOCAL"
+  )
+
+  if [[ -z "$1" ]]; then
+    echo "Active SIP profile:"
+    grep -E '^SIP_(API_BASE_URI|USERNAME|API_KEY|BASE)=' "$env_file"
+    echo "Usage: sipenv {binarcode|dev|prod|stage|local}"
+    return 0
+  fi
+
+  local target="${labels[$1]}"
+  if [[ -z "$target" ]]; then
+    echo "Unknown profile: $1 (use binarcode|dev|prod|stage|local)"
+    return 1
+  fi
+
+  local tmp="${env_file}.sipenv.tmp"
+  awk -v target="$target" '
+    /^#[[:space:]]+[A-Z]/ && $0 !~ /=/ { lbl=$0; sub(/^#[[:space:]]*/,"",lbl); sub(/[[:space:]]+$/,"",lbl); block=lbl }
+    {
+      if ($0 ~ /^#?(SIP_API_BASE_URI|SIP_API_KEY|SIP_BASE|SIP_USERNAME)=/ &&
+          (block=="PRODUCTION (BINARCODE)"||block=="DEV"||block=="PRODUCTION"||block=="STAGE"||block=="SIP LOCAL")) {
+        line=$0; sub(/^#/,"",line)
+        if (block==target) print line; else print "#" line
+        next
+      }
+      print
+    }' "$env_file" > "$tmp" && mv "$tmp" "$env_file"
+
+  echo "SIP profile → $1 ($target)"
+  grep -E '^SIP_(API_BASE_URI|USERNAME|API_KEY|BASE)=' "$env_file"
+}
+alias sip-binarcode="sipenv binarcode"
+alias sip-dev="sipenv dev"
+alias sip-prod="sipenv prod"
+alias sip-stage="sipenv stage"
+alias sip-local="sipenv local"
