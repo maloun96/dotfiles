@@ -56,5 +56,12 @@
     "key": "cmd+b",
     "command": "workbench.action.toggleSidebarVisibility",
     "when": "!editorTextFocus"
+  },
+
+  // --- JetBrains cmd+shift+F: search inside the folder selected in the explorer ---
+  {
+    "key": "cmd+shift+f",
+    "command": "filesExplorer.findInFolder",
+    "when": "explorerViewletVisible && filesExplorerFocus && !inputFocus && explorerResourceIsFolder"
   }
 ]
