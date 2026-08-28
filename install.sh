@@ -45,6 +45,9 @@ rm -rf $HOME/.zshrc
 ln -s $HOME/.dotfiles/.zshrc $HOME/.zshrc
 ln -s $HOME/.dotfiles/vimrc $HOME/.vim/vimrc
 
+# Symlink VS Code settings, keybindings and restore extensions
+./vscode.sh
+
 # Symlink the Mackup config file to the home directory
 ln -s $HOME/.dotfiles/.mackup.cfg $HOME/.mackup.cfg
 

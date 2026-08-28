@@ -1,0 +1,60 @@
+[
+  {
+    "key": "cmd+2",
+    "command": "workbench.action.terminal.toggleTerminal"
+  },
+  {
+    "key": "cmd+2",
+    "command": "-workbench.action.focusSecondEditorGroup"
+  },
+
+  // --- WebStorm-style navigation ---
+  {
+    "key": "cmd+[",
+    "command": "workbench.action.navigateBack"
+  },
+  {
+    "key": "cmd+]",
+    "command": "workbench.action.navigateForward"
+  },
+  // free up cmd+[ / cmd+] from the default indent/outdent (use tab / shift+tab instead)
+  {
+    "key": "cmd+[",
+    "command": "-editor.action.outdentLines"
+  },
+  {
+    "key": "cmd+]",
+    "command": "-editor.action.indentLines"
+  },
+  // drop the VS Code defaults for back/forward so they don't linger
+  {
+    "key": "ctrl+-",
+    "command": "-workbench.action.navigateBack"
+  },
+  {
+    "key": "ctrl+shift+-",
+    "command": "-workbench.action.navigateForward"
+  },
+  // --- JetBrains double-shift ---
+  {
+    "key": "shift shift",
+    "command": "workbench.action.showCommands"
+  },
+
+  // --- WebStorm cmd+B: peek usages of the symbol under the cursor (inline widget) ---
+  {
+    "key": "cmd+b",
+    "command": "editor.action.goToReferences",
+    "when": "editorHasReferenceProvider && editorTextFocus && !inReferenceSearchEditor && !isInEmbeddedEditor"
+  },
+  // give up the sidebar toggle only while the editor has focus
+  {
+    "key": "cmd+b",
+    "command": "-workbench.action.toggleSidebarVisibility"
+  },
+  {
+    "key": "cmd+b",
+    "command": "workbench.action.toggleSidebarVisibility",
+    "when": "!editorTextFocus"
+  }
+]

@@ -6,6 +6,22 @@ This is a repository forked from @driesvints. Check it out: https://github.com/d
 
 ![Terminal Setup](/docs/zsh.png)
 
+## VS Code
+
+`settings.json` and `keybindings.json` live in [`vscode/`](./vscode) and are **symlinked** into
+`~/Library/Application Support/Code/User/`, so edits made inside VS Code show up as changes in
+this repo — just commit them.
+
+Installed extensions are listed in [`vscode/extensions.txt`](./vscode/extensions.txt). Refresh it
+after adding or removing one:
+
+```zsh
+code --list-extensions | sort > ~/.dotfiles/vscode/extensions.txt
+```
+
+[`vscode.sh`](./vscode.sh) re-creates the symlinks and reinstalls every extension. It runs as part
+of `install.sh`, and is safe to run on its own at any time.
+
 ## A Fresh macOS Setup
 
 These instructions are for when you've already set up your dotfiles. If you want to get started with your own dotfiles you can [find instructions below](#your-own-dotfiles).

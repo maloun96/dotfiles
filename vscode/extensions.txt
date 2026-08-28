@@ -1,0 +1,14 @@
+anthropic.claude-code
+arturock.gitstash
+dart-code.dart-code
+dart-code.flutter
+figma.figma-vscode-extension
+jackiotyu.git-worktree-manager
+llvm-vs-code-extensions.lldb-dap
+ms-azuretools.vscode-containers
+ms-azuretools.vscode-docker
+ms-vscode-remote.remote-containers
+swiftlang.swift-vscode
+tamasfe.even-better-toml
+vue.volar
+withfig.fig
