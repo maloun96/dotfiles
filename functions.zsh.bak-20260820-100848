@@ -127,18 +127,16 @@ function scheduler () {
 }
 
 # ─── Reshetcall platform stack (sipcf) ───────────────────────────────────────
-# One dispatcher for the local Cloudflare Workers platform. Services run
-# detached in the background; stdout+stderr go to a log file per service.
-# No terminal multiplexer involved — works in any terminal, over ssh, and
-# from a non-interactive shell.
-#   sipio all | full | stop | status | logs | seed | drift | open <svc> | web <svc> | ls
+# One dispatcher for the local Cloudflare Workers platform. Every service gets
+# its own cmux tab, titled with the service's .test hostname.
+#   sipio all | full | stop | status | seed | drift | open <svc> | web <svc> | ls
 # Full docs: ~/.dotfiles/docs/sipio-stack.md
 export SIPIO_ROOT="${SIPIO_ROOT:-$HOME/www/sipcf}"
-_SIPIO_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/sipio"
-_SIPIO_PROCS="$_SIPIO_DIR/procs"     # svc|host|port|pid, one line per running service
-_SIPIO_LOGS="$_SIPIO_DIR/logs"       # <svc>.log
+export SIPIO_CMUX="${CMUX_BUNDLED_CLI_PATH:-/Applications/cmux.app/Contents/Resources/bin/cmux}"
+export SIPIO_TAB_DELAY="${SIPIO_TAB_DELAY:-1.5}"   # shell-readiness wait before sending a command
+_SIPIO_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/sipio/tabs"
 
-# name | host (.test) | port | inspector | dir | command
+# name | host (.test, also the tab title) | port | inspector | dir | command
 # Every wrangler worker needs its OWN --inspector-port: they all default to 9229
 # and every worker after the first dies with "Address already in use".
 _sipio_core() {
@@ -164,8 +162,6 @@ chat|chat.sip.test|8706|9261|CONTAQT/contaqt-new/apps/chat|npx wrangler dev --po
 cnui|workspace-ui.sip.test|5177|-|CONTAQT/contaqt-new/apps/workspace-ui|npx vite --port 5177 --strictPort
 dhc|dashboard.sip.test|5175|-|DIDHUB/didhub-customer|npx vite --port 5175 --strictPort
 fraud|fraud.sip.test|5176|-|SIP/fraud-screen-dashboard|npx vite --port 5176 --strictPort
-svx|spanvox.sip.test|8798|9252|spanvox/spanvox-api|npx wrangler dev --port 8798 --inspector-port 9252
-svxd|spanvox-admin.sip.test|5178|-|spanvox/spanvox-dashboard|npx vite --port 5178 --strictPort --host 127.0.0.1
 wp|webphone|-|-|PBX/webphone|npm run build:watch:dev
 REG
 }
@@ -196,20 +192,6 @@ _sipio_lookup() {
 	return 0
 }
 
-# Node 22's bin directory. Wrangler refuses anything older and fails with a bare
-# "Wrangler requires at least Node.js v22.0.0". Spawned services are
-# non-interactive shells that never source .zshrc, so nvm does not exist there —
-# resolve the path here and prepend it to PATH instead of calling `nvm use`.
-_sipio_node_bin() {
-	if [[ -z "$_SIPIO_NODE_BIN" ]]; then
-		local n
-		n=$(command ls -d "$HOME"/.nvm/versions/node/v22.*/bin 2>/dev/null | sort -V | tail -1)
-		[[ -z "$n" ]] && n="${${:-$(command -v node)}:h}"
-		_SIPIO_NODE_BIN="$n"
-	fi
-	print -r -- "$_SIPIO_NODE_BIN"
-}
-
 # Free a port. `wrangler dev` spawns a child `workerd` that survives a plain
 # TERM of its parent and keeps BOTH its service port and its inspector port
 # bound, so re-check and escalate to -9.
@@ -225,78 +207,47 @@ _sipio_kill_port() {
 	return 0
 }
 
-# Live PID for a service, or nothing.
-_sipio_pid_of() {
-	local name="$1" n h p pid
-	[[ -f "$_SIPIO_PROCS" ]] || return 1
-	while IFS='|' read -r n h p pid; do
-		[[ "$n" == "$name" && -n "$pid" ]] || continue
-		kill -0 "$pid" 2>/dev/null && { print -r -- "$pid"; return 0; }
-	done < "$_SIPIO_PROCS"
-	return 1
-}
+# Open one cmux tab, title it with the hostname, and run the command in it.
+_sipio_tab() {
+	local name="$1" host="$2" port="$3" dir="$4" cmd="$5" focus="${6:-false}"
+	local ws ref out
+	ws=$(CMUX_QUIET=1 "$SIPIO_CMUX" current-workspace 2>/dev/null)
+	[[ -z "$ws" ]] && { echo "  ✗ $host — cmux not reachable (is the app running?)"; return 1; }
 
-# Drop every recorded PID for a service (restart, or the process is gone).
-_sipio_forget() {
-	local name="$1"
-	[[ -f "$_SIPIO_PROCS" ]] || return 0
-	grep -v "^${name}|" "$_SIPIO_PROCS" > "$_SIPIO_PROCS.tmp" 2>/dev/null
-	mv -f "$_SIPIO_PROCS.tmp" "$_SIPIO_PROCS" 2>/dev/null
-}
+	out=$(CMUX_QUIET=1 "$SIPIO_CMUX" new-surface --type terminal --workspace "$ws" --focus "$focus" 2>&1)
+	ref=$(print -r -- "$out" | grep -oE 'surface:[0-9]+' | head -1)
+	[[ -z "$ref" ]] && { echo "  ✗ $host — could not create tab: $out"; return 1; }
 
-# Start one service detached, truncating its log. The recorded PID is the
-# command itself (`exec`), not a wrapper shell.
-_sipio_spawn() {
-	local name="$1" host="$2" port="$3" dir="$4" cmd="$5"
-	local log="$_SIPIO_LOGS/${name}.log" pid
+	CMUX_QUIET=1 "$SIPIO_CMUX" rename-tab --surface "$ref" "$host" >/dev/null 2>&1
 
-	if [[ ! -d "$SIPIO_ROOT/$dir" ]]; then
-		echo "  ✗ $host — no such directory: $SIPIO_ROOT/$dir"
-		return 1
-	fi
-	mkdir -p "$_SIPIO_LOGS"
+	# A fresh surface is still printing its login banner; sending too early
+	# splices the command into that output and it never runs.
+	sleep "$SIPIO_TAB_DELAY"
+	CMUX_QUIET=1 "$SIPIO_CMUX" send-key --surface "$ref" ctrl+u >/dev/null 2>&1
 
-	nohup zsh -c "cd '$SIPIO_ROOT/$dir' || exit 1
-export PATH='$(_sipio_node_bin)':\$PATH
-exec $cmd" >"$log" 2>&1 &
-	pid=$!
-	disown 2>/dev/null
+	# Pin Node 22 — wrangler refuses anything older and fails opaquely.
+	local full="cd ${SIPIO_ROOT}/${dir} && { command -v nvm >/dev/null && nvm use 22 >/dev/null 2>&1; }; ${cmd}"
+	CMUX_QUIET=1 "$SIPIO_CMUX" send --surface "$ref" "$full" >/dev/null 2>&1
+	CMUX_QUIET=1 "$SIPIO_CMUX" send-key --surface "$ref" enter >/dev/null 2>&1
 
-	_sipio_forget "$name"
-	print -r -- "${name}|${host}|${port}|${pid}" >> "$_SIPIO_PROCS"
-	printf "  ▸ %-22s %-6s pid %s\n" "$host" "$port" "$pid"
+	mkdir -p "${_SIPIO_STATE:h}"
+	print -r -- "${host}|${ref}" >> "$_SIPIO_STATE"
+	printf "  ▸ %-22s %-6s tab %s\n" "$host" "$port" "$ref"
 	return 0
 }
 
-# One pass, after the whole set is up: anything already dead crashed on startup
-# (wrong node, missing build output, port still held) — say so and point at the log.
-_sipio_report_dead() {
-	local listing="$1" name host port insp dir cmd dead=0
-	sleep 2
-	while IFS='|' read -r name host port insp dir cmd; do
-		[[ -z "$name" ]] && continue
-		_sipio_pid_of "$name" >/dev/null && continue
-		_sipio_forget "$name"
-		echo "  ✗ $host exited on startup — sipio logs $name -n 40"
-		dead=1
-	done <<< "$listing"
-	return $dead
-}
-
 _sipio_start_set() {
-	local listing="$1" name host port insp dir cmd
+	local listing="$1" first=1 name host port insp dir cmd
 	while IFS='|' read -r name host port insp dir cmd; do
 		[[ -z "$name" ]] && continue
-		_sipio_kill_port "$port" >/dev/null 2>&1
-		_sipio_kill_port "$insp" >/dev/null 2>&1
-		_sipio_spawn "$name" "$host" "$port" "$dir" "$cmd"
+		if (( first )); then _sipio_tab "$name" "$host" "$port" "$dir" "$cmd" true; first=0
+		else _sipio_tab "$name" "$host" "$port" "$dir" "$cmd" false; fi
 	done <<< "$listing"
-	_sipio_report_dead "$listing"
 }
 
 # Start one or more services. `--here` (foreground, this shell) takes a single one.
 _sipio_run() {
-	local here=0 svc row rc name host port insp dir cmd
+	local here=0 svc row rc first=1 name host port insp dir cmd
 	local -a args rows
 	for svc in "$@"; do
 		case "$svc" in
@@ -320,45 +271,20 @@ _sipio_run() {
 		IFS='|' read -r name host port insp dir cmd <<< "${rows[1]}"
 		_sipio_kill_port "$port" >/dev/null 2>&1
 		_sipio_kill_port "$insp" >/dev/null 2>&1
-		_sipio_forget "$name"
 		echo "▸ $host  (:$port)  — Ctrl+C to stop"
-		( cd "$SIPIO_ROOT/$dir" && export PATH="$(_sipio_node_bin):$PATH" && eval "$cmd" )
+		( cd "$SIPIO_ROOT/$dir" && { command -v nvm >/dev/null && nvm use 22 >/dev/null 2>&1; }; eval "$cmd" )
 		return
 	fi
 
 	# Restart semantics: free BOTH ports first. An orphaned workerd keeps the
 	# inspector port bound, and the next start dies on 9xxx, not on the service port.
-	_sipio_start_set "$(print -l -- "${rows[@]}")"
-}
-
-# tail the log of one service, or interleave them all.
-_sipio_logs() {
-	local svc="" lines=0 follow=1 a row name
-	local -a files
-	while (( $# )); do
-		case "$1" in
-			-n) lines="${2:-100}"; follow=0; shift 2 ;;
-			-n*) lines="${1#-n}"; follow=0; shift ;;
-			-f) follow=1; shift ;;
-			*) svc="$1"; shift ;;
-		esac
+	for row in "${rows[@]}"; do
+		IFS='|' read -r name host port insp dir cmd <<< "$row"
+		_sipio_kill_port "$port" >/dev/null 2>&1
+		_sipio_kill_port "$insp" >/dev/null 2>&1
+		if (( first )); then _sipio_tab "$name" "$host" "$port" "$dir" "$cmd" true; first=0
+		else _sipio_tab "$name" "$host" "$port" "$dir" "$cmd" false; fi
 	done
-
-	if [[ -n "$svc" ]]; then
-		row=$(_sipio_lookup "$svc") || { echo "unknown service: $svc  (try: sipio ls)" >&2; return 1; }
-		name=$(print -r -- "$row" | cut -d'|' -f1)
-		files=("$_SIPIO_LOGS/${name}.log")
-		[[ -f "$files[1]" ]] || { echo "no log yet for $name" >&2; return 1; }
-	else
-		files=("$_SIPIO_LOGS"/*.log(N))
-		(( ${#files} == 0 )) && { echo "no logs in $_SIPIO_LOGS" >&2; return 1; }
-	fi
-
-	if (( follow )); then
-		tail -n "${lines:-20}" -f "${files[@]}"
-	else
-		tail -n "$lines" "${files[@]}"
-	fi
 }
 
 function sipio() {
@@ -368,51 +294,45 @@ function sipio() {
 		all)
 			echo "Starting core platform stack in ${SIPIO_ROOT}"
 			_sipio_start_set "$(_sipio_core)"
-			echo "  · sipio status        health table"
-			echo "  · sipio logs <svc>    watch one service"
+			echo "  · sipio status  to check health"
 			;;
 		full)
 			echo "Starting FULL stack (core + contaqt-new + frontends)"
 			_sipio_start_set "$(_sipio_all_services)"
-			echo "  · sipio status        health table"
-			echo "  · sipio logs <svc>    watch one service"
+			echo "  · sipio status  to check health"
 			;;
 		stop)
-			local name host port insp dir cmd pid
+			local name host port insp dir cmd ref
 			echo "Stopping services…"
 			while IFS='|' read -r name host port insp dir cmd; do
 				[[ -z "$name" ]] && continue
-				pid=$(_sipio_pid_of "$name") && kill "$pid" 2>/dev/null
-				_sipio_forget "$name"
-				# wrangler's workerd child outlives its parent and holds both ports.
-				if _sipio_kill_port "$port"; then
-					echo "  ✗ $host (:$port)"
-				elif [[ -n "$pid" ]]; then
-					echo "  ✗ $host (pid $pid)"
-				fi
-				_sipio_kill_port "$insp" >/dev/null
+				_sipio_kill_port "$port" && echo "  ✗ $host (:$port)"
+				_sipio_kill_port "$insp" >/dev/null   # orphaned workerd holds this too
 			done <<< "$(_sipio_all_services)"
-			pkill -f 'build:watch:dev' 2>/dev/null   # portless watchers started outside sipio
-			rm -f "$_SIPIO_PROCS"
+			pkill -f 'build:watch:dev' 2>/dev/null   # webphone + other portless watchers
+			if [[ -f "$_SIPIO_STATE" ]]; then
+				echo "Closing tabs…"
+				while IFS='|' read -r host ref; do
+					[[ -z "$ref" ]] && continue
+					CMUX_QUIET=1 "$SIPIO_CMUX" close-surface --surface "$ref" >/dev/null 2>&1 && echo "  · closed $host"
+				done < "$_SIPIO_STATE"
+				rm -f "$_SIPIO_STATE"
+			fi
 			;;
 		status)
-			local name host port insp dir cmd code pid
-			printf "  %-22s %-6s %-8s %s\n" "HOST" "PORT" "PID" "HTTP"
+			local name host port insp dir cmd code
+			printf "  %-22s %-6s %s\n" "HOST" "PORT" "HTTP"
 			while IFS='|' read -r name host port insp dir cmd; do
 				[[ -z "$name" ]] && continue
-				pid=$(_sipio_pid_of "$name") || pid="—"
 				if [[ "$port" == "-" ]]; then
-					printf "  %-22s %-6s %-8s %s\n" "$host" "—" "$pid" "(watch build, no port)"
+					printf "  %-22s %-6s %s\n" "$host" "—" "(watch build, no port)"
 				else
 					code=$(curl -s -o /dev/null -w '%{http_code}' -m 3 "http://localhost:${port}/" 2>/dev/null)
 					[[ "$code" == "000" ]] && code="DOWN"
-					printf "  %-22s %-6s %-8s %s\n" "$host" "$port" "$pid" "$code"
+					printf "  %-22s %-6s %s\n" "$host" "$port" "$code"
 				fi
 			done <<< "$(_sipio_all_services)"
 			echo "  (404 = worker up, no route at /)"
-			;;
-		logs|log)
-			_sipio_logs "$@" || return 1
 			;;
 		seed)
 			( cd "$SIPIO_ROOT/platform-dev" && npm run seed && npm run seed:finance && npm run drift )
@@ -421,7 +341,7 @@ function sipio() {
 			( cd "$SIPIO_ROOT/platform-dev" && npm run drift )
 			;;
 		run)
-			# sipio run <svc> [<svc>…]   → each detached, logging to ~/.local/state/sipio/logs
+			# sipio run <svc> [<svc>…]   → each in its own cmux tab
 			# sipio run <svc> --here     → run it in THIS shell, foreground
 			_sipio_run "$@" || return 1
 			;;
@@ -451,16 +371,14 @@ function sipio() {
 			;;
 		help|-h|--help)
 			cat <<'HELP'
-  sipio run <svc>…       start (or restart) one or more services, detached
+  sipio run <svc>…       start (or restart) one or more services, a cmux tab each
                          e.g. sipio run fe app idp
   sipio run <svc> --here run it in THIS shell instead (foreground, Ctrl+C stops)
   sipio <svc>…           shorthand for `sipio run <svc>…`
   sipio all              core stack: idp app ctl fin pay did crm mon fe
   sipio full             everything, incl. contaqt-new + the Vite frontends
-  sipio stop             kill every service (service + inspector port)
-  sipio status           host-by-host health table, with PIDs
-  sipio logs <svc>       tail -f one service   (sipio logs = all of them)
-  sipio logs <svc> -n 50 last 50 lines, no follow
+  sipio stop             kill every service (service + inspector port), close its tab
+  sipio status           host-by-host health table
   sipio seed             migrate + seed all planes, then drift-check
   sipio drift            drift-check only
   sipio open <svc>       open http://localhost:<port>   (always works)
@@ -469,7 +387,6 @@ function sipio() {
 
   <svc> accepts the short name (app), the hostname (app.sip.test)
   or the repo directory (pbx-api).
-  Logs live in ~/.local/state/sipio/logs/<svc>.log
 HELP
 			;;
 		*)

@@ -269,10 +269,8 @@ alias sip-local="sipenv local"
 # Pin the ports here rather than in package.json: wrangler's default 8787 walks
 # upward when it's taken, so with several wrangler apps open the port depends on
 # boot order — and the iOS base URL below has to be stable.
-# 8798 is the same port the sipio registry pins for `svx`, so the standalone alias
-# and `sipio run svx` are interchangeable and the dashboard/iOS base URLs hold either way.
-export SPANVOX_API_PORT=${SPANVOX_API_PORT:-8798}
-alias spanvox-api='cd ~/www/sipcf/spanvox/spanvox-api && npx wrangler dev --port $SPANVOX_API_PORT --inspector-port 9252'
+export SPANVOX_API_PORT=${SPANVOX_API_PORT:-8799}
+alias spanvox-api='cd ~/www/sipcf/spanvox/spanvox-api && npx wrangler dev --port $SPANVOX_API_PORT --inspector-port 9339'
 # Builds + launches the simulator app. `spanvox-ios` targets the local API above
 # (simulator only — a real device can't reach the host's localhost); `-prod` omits
 # API_BASE, which is what makes the app fall back to https://api.spanvox.com.
@@ -280,14 +278,7 @@ alias spanvox-api='cd ~/www/sipcf/spanvox/spanvox-api && npx wrangler dev --port
 # stale session just fails to restore and drops you on the login screen.
 alias spanvox-ios='cd ~/www/sipcf/spanvox/apps/ios && make dev API_BASE=http://localhost:$SPANVOX_API_PORT'
 alias spanvox-ios-prod='cd ~/www/sipcf/spanvox/apps/ios && make dev'
-# Vite dev server on 5178 — same port the sipio registry pins for `svxd`, so this
-# and `sipio run svxd` are interchangeable. --strictPort so a taken port fails
-# loudly instead of drifting to 5179. Its API base comes from
+# Vite dev server (port 5173 from vite.config.ts). --strictPort so a taken port
+# fails loudly instead of drifting to 5174. Its API base comes from
 # spanvox-dashboard/.env.development.local — keep that on $SPANVOX_API_PORT.
-alias spanvox-dashboard='cd ~/www/sipcf/spanvox/spanvox-dashboard && npm run dev -- --port 5178 --strictPort'
-
-# Reshetcall platform stack — see functions.zsh / docs/sipio-stack.md
-alias stack="sipio all"
-alias stackfull="sipio full"
-alias stackstop="sipio stop"
-alias stacklogs="sipio logs"
+alias spanvox-dashboard='cd ~/www/sipcf/spanvox/spanvox-dashboard && npm run dev -- --strictPort'
